@@ -11,12 +11,13 @@
 -- a chapter at a time (about 12 KB of text), which is paginated with
 -- wada.ui.text_lines so the firmware's own font metrics decide where a line breaks.
 -- Images: a book's pictures show as an <image: alt text> line. When the firmware has
--- wada.ui.image (not yet released) the Images menu row chooses between "never" (that
--- line only), "on tap" (tap the line, or the menu's View image row, to see the picture
--- fit to the screen; any tap or key returns) and "always" (a picture gets a page of its
--- own). Without wada.ui.image the app behaves as "never" and the row is not shown.
+-- wada.ui.image (Wadamesh beta_106 and later) the Images menu row chooses between "never"
+-- (that line only), "on tap" (the default: tap the line, or the menu's View image row, to
+-- see the picture fit to the screen; any tap or key returns) and "always" (a picture gets
+-- a page of its own). Without wada.ui.image the app behaves as "never" and the row is not
+-- shown.
 --
--- The call this app expects (proposed; the code that uses it is in draw_image):
+-- The firmware call this app uses (see draw_image):
 --   local img, err = wada.ui.image(file, offset, length, x, y, w, h)
 --     decodes the PNG/JPEG/BMP stored in app file `file` at bytes [offset, offset+length)
 --     and draws it inside the box x,y,w,h, scaled down to fit, aspect kept, centred.
@@ -44,7 +45,7 @@ local MAX_IMGS = 300         -- picture entries kept from the zip directory (eac
 local IMG_EXT = { png = 1, jpg = 1, jpeg = 1, bmp = 1 }   -- what the firmware can decode
 local IMG_MODES = { "always", "tap", "never" }
 local IMG_NAMES = { always = "always", tap = "on tap", never = "never" }
-local DEFAULT_IMAGES = "never"   -- becomes "tap" once firmware with wada.ui.image ships
+local DEFAULT_IMAGES = "tap"
 local POS_BYTES = 180        -- the store reloads a line of at most 191 bytes, "pos=" included
 
 local W, H
