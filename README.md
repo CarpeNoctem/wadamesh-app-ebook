@@ -44,11 +44,13 @@ The app runs unmodified in the Wadamesh Lua harness:
 
 ## Status
 
-Version 1.0 is released. In progress for 2.0: pictures on tap by default (done), a
-long title no longer overlapping the author in the menu (done), `.txt` files (done),
-and a first-run README that names the books folder (done). Reading from anywhere on
-the SD card is not possible: the Lua SDK can list the card (`wada.sd`) but only lets an
-app read files inside its own folder, so books stay in `ebook.d`.
+Version 2.0 (current) adds: pictures shown on tap by default, a long title no longer
+overlapping the author in the menu, `.txt` files, a first-run README that names the
+books folder, and no separate "View image" menu row (tap the picture line, or press `i`).
+Version 1.0 is kept under `deploy/apps/ebook/1.0/`.
+
+Books stay in the app's own folder (`ebook.d`): the Lua SDK can list the SD card
+(`wada.sd`) but only lets an app read files inside its own folder.
 
 ## License
 
