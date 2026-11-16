@@ -12,7 +12,7 @@
 -- wada.ui.text_lines so the firmware's own font metrics decide where a line breaks.
 -- Images: a book's pictures show as an <image: alt text> line. When the firmware has
 -- wada.ui.image (Wadamesh beta_106 and later) the Images menu row chooses between "never"
--- (that line only), "on tap" (the default: tap the line, or the menu's View image row, to
+-- (that line only), "on tap" (the default: tap the line, or press i, to
 -- see the picture fit to the screen; any tap or key returns) and "always" (a picture gets
 -- a page of its own). Without wada.ui.image the app behaves as "never" and the row is not
 -- shown.
@@ -1007,8 +1007,6 @@ function show_menu()
   local list = ui.list(M, y + 4, W - 2 * M, H - y - 2 * M - 4)
   local size_row, img_row
   list:add(SYM_LEFT .. "  " .. tr("Continue reading"), function() show_reading() end)
-  local pic = images() == "tap" and sec and sec.pp and sec.pp[page] and page_image(sec, page)
-  if pic then list:add(tr("View image"), function() show_image(pic) end) end
   list:add(tr("Chapters"), function() chap_page = (book.sp - 1) // PAGE_ROWS + 1; show_chapters() end)
   size_row = list:add(size_label(), function()
     for i, v in ipairs(SIZES) do
