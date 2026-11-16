@@ -1,0 +1,53 @@
+# Ebook for Wadamesh
+
+An .epub reader app (Lua) for [Wadamesh](https://github.com/ALLFATHER-BV/wadamesh) OS,
+aimed mainly at the LilyGo T-Deck Pro and T-Deck Max, and working on the other
+boards that run Lua apps with the extended SDK (`requires: sdk_ext`).
+
+- Reads a book a page at a time, with a chapter list, three text sizes, and your
+  place remembered for the last ten books.
+- Touch taps and swipes, trackball or D-pad, keyboard, and jog wheel / encoder.
+- Pictures: with firmware that has `wada.ui.image`, a book's pictures can show on
+  their own page or on a tap (Menu > Images). Without it the app shows an
+  `<image: description>` line.
+
+## Install
+
+1. Copy `ebook.lua` and `ebook.json` to `/apps/` on the device (or
+   `/meshcomod/apps/` on the SD card). Files from `deploy/apps/ebook/<version>/`
+   are the released versions.
+2. Prepare a book (below) and copy it to `/apps/ebook.d/` (internal flash) or
+   `/meshcomod/apps/ebook.d/` (SD card).
+3. Open **Ebook** from the apps list.
+
+## Preparing books
+
+The Lua SDK has no inflate, so the `.epub` must be stored uncompressed, and
+`wada.fs` file names are at most 32 characters of `A-Z a-z 0-9 . _ -`.
+`scripts/ebook-prep.py` repacks any `.epub` that way (the result is still a valid
+`.epub`) and shortens its name:
+
+    scripts/ebook-prep.py book.epub [more.epub ...] [-o OUTDIR] [--no-images]
+
+## Testing
+
+The app runs unmodified in the Wadamesh Lua harness:
+`scripts/lua-harness/run.sh deploy/apps/ebook/1.0/ebook.lua` in the
+[wadamesh](https://github.com/ALLFATHER-BV/wadamesh) repository.
+
+## Layout
+
+    ebook.lua, ebook.json          current version, ready to copy to a device
+    deploy/apps/ebook/<version>/   each released version
+    scripts/ebook-prep.py          repack an .epub for the app
+
+## Status
+
+Version 1.0. Planned for 2.0: reading `.txt` files, reading from anywhere on the
+SD card (not just the app folder), wrapping long book titles in the menu, and
+making picture display on tap the default once `wada.ui.image` ships in a release.
+
+## License
+
+**GPL-3.0-or-later**, the same as Wadamesh: see [LICENSE](LICENSE). Source files
+carry an `SPDX-License-Identifier: GPL-3.0-or-later` header.
