@@ -33,7 +33,7 @@ The Lua SDK has no inflate, so the `.epub` must be stored uncompressed, and
 ## Testing
 
 The app runs unmodified in the Wadamesh Lua harness:
-`scripts/lua-harness/run.sh deploy/apps/ebook/1.0/ebook.lua` in the
+`scripts/lua-harness/run.sh deploy/apps/ebook/2.0/ebook.lua` in the
 [wadamesh](https://github.com/ALLFATHER-BV/wadamesh) repository.
 
 ## Layout
@@ -46,7 +46,9 @@ The app runs unmodified in the Wadamesh Lua harness:
 
 Version 1.0 is released. In progress for 2.0: pictures on tap by default (done), a
 long title no longer overlapping the author in the menu (done), `.txt` files (done),
-and reading from anywhere on the SD card, not just the app folder.
+and a first-run README that names the books folder (done). Reading from anywhere on
+the SD card is not possible: the Lua SDK can list the card (`wada.sd`) but only lets an
+app read files inside its own folder, so books stay in `ebook.d`.
 
 ## License
 

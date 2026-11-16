@@ -935,10 +935,22 @@ local function open_book(name)
 end
 
 -- ---- library, menu, chapters ------------------------------------------------------
-local README = "Put .epub books and .txt files in this folder.\n\n" ..
-  "File names: up to 32 characters of A-Z a-z 0-9 . _ - (no spaces).\n" ..
-  "An .epub must be stored uncompressed inside. Convert one with\n" ..
-  "scripts/ebook-prep.py from the wadamesh repository.\n"
+local README_NAME = "README.txt"
+local README = "Welcome to Ebook.\n\n" ..
+  "Put your books in this folder: /meshcomod/apps/ebook.d/ on the SD card (/apps/ebook.d/ on a device that keeps its apps in internal flash). Copy them there from a computer, then open Ebook again.\n\n" ..
+  "Books can be .epub or plain .txt files. Names are limited to 32 characters of A-Z a-z 0-9 . _ - (no spaces).\n\n" ..
+  "An .epub must be stored uncompressed inside. Convert one with scripts/ebook-prep.py from github.com/CarpeNoctem/wadamesh-app-ebook.\n\n" ..
+  "This file is only made when the folder has no books. Delete it whenever you like.\n"
+
+local function list_books()
+  local names = {}
+  for _, f in ipairs(fs.list() or {}) do
+    local x = f.name:lower()
+    if (x:sub(-5) == ".epub" or x:sub(-4) == ".txt") and #names < MAX_BOOKS then names[#names + 1] = f end
+  end
+  table.sort(names, function(a, b) return a.name:lower() < b.name:lower() end)
+  return names
+end
 
 function show_library()
   clear()
@@ -950,19 +962,13 @@ function show_library()
   local hint = ui.label("", M, H - M - ui.text_h(12), 12, C.sub)
   hint:width(W - 2 * M)
   if book then list:add(SYM_LEFT .. "  " .. tr("Back to book"), function() show_reading() end) end
-  local names = {}
-  for _, f in ipairs(fs.list() or {}) do
-    local x = f.name:lower()
-    if (x:sub(-5) == ".epub" or x:sub(-4) == ".txt") and #names < MAX_BOOKS then names[#names + 1] = f end
-  end
-  table.sort(names, function(a, b) return a.name:lower() < b.name:lower() end)
+  local names = list_books()
   for _, f in ipairs(names) do
     local stem = f.name:lower():sub(-4) == ".txt" and f.name:sub(1, -5) or f.name:sub(1, -6)
     list:add(stem .. "  \xC2\xB7  " .. human(f.size), function() open_book(f.name) end)
   end
   if #names == 0 then
-    hint:set(tr("No books. Add .epub or .txt files to this app's folder."))
-    if not fs.read("README.txt", 0, 0) then fs.write("README.txt", README) end   -- creates the folder too
+    hint:set(tr("No books. Add .epub or .txt files to /meshcomod/apps/ebook.d/ on the SD card."))
   else
     hint:set(string.format(tr("%d book(s)"), #names))
   end
@@ -1066,8 +1072,19 @@ function app.on_open(w, h)
   local im = kv("img")
   for _, v in ipairs(IMG_MODES) do if v == im then img_mode = im end end
   load_positions()
+  local real = 0
+  for _, f in ipairs(list_books()) do if f.name ~= README_NAME then real = real + 1 end end
   local last = kv("last")
-  if last and fs.read(tostring(last), 0, 0) then open_book(last) else show_library() end
+  if real == 0 then
+    -- an empty folder: open the README as the guide to filling it
+    local _, have = fs.read(README_NAME, 0, 0)
+    if have ~= #README then fs.write(README_NAME, README) end   -- also creates the folder; refreshes an older guide
+    open_book(README_NAME)
+  elseif last and last ~= README_NAME and fs.read(tostring(last), 0, 0) then
+    open_book(last)
+  else
+    show_library()
+  end
   timer.every(40)
 end
 
