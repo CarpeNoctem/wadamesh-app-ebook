@@ -1,10 +1,11 @@
 # Ebook for Wadamesh
 
-An .epub reader app (Lua) for [Wadamesh](https://github.com/ALLFATHER-BV/wadamesh) OS,
+An .epub and .txt reader app (Lua) for [Wadamesh](https://github.com/ALLFATHER-BV/wadamesh) OS,
 aimed mainly at the LilyGo T-Deck Pro and T-Deck Max, and working on the other
 boards that run Lua apps with the extended SDK (`requires: sdk_ext`).
 
-- Reads a book a page at a time, with a chapter list, three text sizes, and your
+- Reads an .epub or a plain .txt file (UTF-8 or Latin-1; hard-wrapped lines are
+  joined into paragraphs) a page at a time, with a chapter list, three text sizes, and your
   place remembered for the last ten books.
 - Touch taps and swipes, trackball or D-pad, keyboard, and jog wheel / encoder.
 - Pictures: with firmware that has `wada.ui.image`, a book's pictures can show on
@@ -43,9 +44,9 @@ The app runs unmodified in the Wadamesh Lua harness:
 
 ## Status
 
-Version 1.0. Planned for 2.0: reading `.txt` files, reading from anywhere on the
-SD card (not just the app folder), wrapping long book titles in the menu, and
-making picture display on tap the default once `wada.ui.image` ships in a release.
+Version 1.0 is released. In progress for 2.0: pictures on tap by default (done), a
+long title no longer overlapping the author in the menu (done), `.txt` files (done),
+and reading from anywhere on the SD card, not just the app folder.
 
 ## License
 

@@ -1,5 +1,5 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
--- Ebook (Lua): reads .epub books from the app's own folder (wada.fs).
+-- Ebook (Lua): reads .epub books and plain .txt files from the app's own folder (wada.fs).
 --
 -- Put books in /apps/ebook.d/ (internal flash) or /meshcomod/apps/ebook.d/ (SD
 -- card). wada.fs is flat, so a file name is at most 32 characters of
@@ -375,8 +375,61 @@ local function ld_fill(L)
   if #piece == 0 or L.fo >= L.e.u then L.eof = true end
 end
 
+-- ---- plain text (.txt) ----------------------------------------------------------
+-- A text file is one entry with e.mode set at open: "blank" (paragraphs are separated
+-- by blank lines and hard-wrapped lines are joined) or "line" (each line is a paragraph).
+-- A section is the next SECT_TEXT bytes or so, cut at a paragraph break.
+local function txt_utf8(s)
+  if not s:find("[\x80-\xFF]") then return s end
+  local rest = s:gsub("[\xC2-\xDF][\x80-\xBF]", ""):gsub("[\xE0-\xEF][\x80-\xBF][\x80-\xBF]", "")
+                :gsub("[\xF0-\xF4][\x80-\xBF][\x80-\xBF][\x80-\xBF]", "")
+  if not rest:find("[\x80-\xFF]") then return s end
+  -- not UTF-8: take it as Latin-1
+  return (s:gsub("[\x80-\xFF]", function(c)
+    local b = c:byte()
+    return string.char(0xC0 | (b >> 6), 0x80 | (b & 0x3F))
+  end))
+end
+
+local function ld_txt_step(L)
+  local e, start = L.e, L.start
+  local raw = entry_read(L.Z, e, start, SECT_TEXT + 1500) or ""
+  local last = start + #raw >= e.u
+  local cut = #raw
+  if not last then
+    local at
+    if e.mode == "blank" then
+      for _, stop in raw:gmatch("()\n[ \t\r]*\n[ \t\r\n]*()") do at = stop - 1 end
+    else
+      at = raw:match(".*\n()")
+      at = at and at - 1
+    end
+    if not at then at = (raw:match("^.*() ") or #raw + 1) - 1 end
+    if at < 1 then at = #raw end
+    while at > 1 and at < #raw and cont(raw:byte(at + 1)) do at = at - 1 end
+    cut = at
+  end
+  local text = raw:sub(1, cut)
+  if start == 0 then text = text:gsub("^\xEF\xBB\xBF", "") end
+  text = txt_utf8(text:gsub("\r\n?", "\n"))
+  local paras, kinds = {}, {}
+  local function add(p)
+    p = p:gsub("%s+", " "):gsub("^ ", ""):gsub(" $", "")
+    if p ~= "" then paras[#paras + 1] = p; kinds[#kinds + 1] = "p" end
+  end
+  if e.mode == "blank" then
+    for p in text:gsub("\n[ \t]*\n[ \t\n]*", "\1"):gmatch("[^\1]+") do add(p) end
+  else
+    for line in text:gmatch("[^\n]+") do add(line) end
+  end
+  if #paras == 0 then paras[1], kinds[1] = tr("(empty)"), "p" end
+  L.sec = { paras = paras, kinds = kinds, imgs = {}, off = start, nxt = (not last) and start + cut or nil }
+  return true
+end
+
 -- One step of loading a section. Returns true when the section is complete (L.sec).
 local function ld_step(L)
+  if L.e.mode then return ld_txt_step(L) end
   if #L.buf - L.bp < 3000 and not L.eof then ld_fill(L) end
   local n = 0
   while n < 150 do
@@ -775,11 +828,27 @@ end
 local COMPRESSED = "This book is compressed. Repack it with scripts/ebook-prep.py"
 
 local function open_task(name)
-  local phase = "zip"
+  local phase = name:lower():sub(-4) == ".txt" and "txt" or "zip"
   local Z, opf, opf_dir, mpos, spos, spine, toc
   local want, items, spine_ids, meta = {}, {}, {}, {}
   return function()
-    if phase == "zip" then
+    if phase == "txt" then
+      local _, total = fs.read(name, 0, 0)
+      local head = total and fs.read(name, 0, 8192)
+      if not head then show_error(tr("Cannot read this file")); return end
+      local blanks = 0
+      for _ in head:gmatch("\n[ \t\r]*\n") do blanks = blanks + 1 end
+      local title = name:sub(1, -5)
+      local e = { m = 0, u = total, d = 0, mode = blanks >= 3 and "blank" or "line" }
+      book = { name = name, Z = { name = name, ents = { text = e } }, spine = { { path = "text", title = title } },
+               title = title, author = "", sp = 1 }
+      pred = {}
+      sec = nil
+      set_task(nil)
+      local r = positions[name]
+      if r and r[1] == 1 then goto_section(1, r[2], "this", nil, { r[3], r[4] })
+      else goto_section(1, 0, "this", nil, "first") end
+    elseif phase == "zip" then
       local z, err = zip_open(name)
       if not z then show_error(err); return end
       Z, phase = z, "dir"
@@ -866,9 +935,9 @@ local function open_book(name)
 end
 
 -- ---- library, menu, chapters ------------------------------------------------------
-local README = "Put .epub books in this folder.\n\n" ..
+local README = "Put .epub books and .txt files in this folder.\n\n" ..
   "File names: up to 32 characters of A-Z a-z 0-9 . _ - (no spaces).\n" ..
-  "Books must be stored uncompressed inside the .epub file. Convert one with\n" ..
+  "An .epub must be stored uncompressed inside. Convert one with\n" ..
   "scripts/ebook-prep.py from the wadamesh repository.\n"
 
 function show_library()
@@ -883,14 +952,16 @@ function show_library()
   if book then list:add(SYM_LEFT .. "  " .. tr("Back to book"), function() show_reading() end) end
   local names = {}
   for _, f in ipairs(fs.list() or {}) do
-    if f.name:lower():sub(-5) == ".epub" and #names < MAX_BOOKS then names[#names + 1] = f end
+    local x = f.name:lower()
+    if (x:sub(-5) == ".epub" or x:sub(-4) == ".txt") and #names < MAX_BOOKS then names[#names + 1] = f end
   end
   table.sort(names, function(a, b) return a.name:lower() < b.name:lower() end)
   for _, f in ipairs(names) do
-    list:add(f.name:sub(1, -6) .. "  \xC2\xB7  " .. human(f.size), function() open_book(f.name) end)
+    local stem = f.name:lower():sub(-4) == ".txt" and f.name:sub(1, -5) or f.name:sub(1, -6)
+    list:add(stem .. "  \xC2\xB7  " .. human(f.size), function() open_book(f.name) end)
   end
   if #names == 0 then
-    hint:set(tr("No books. Add .epub files to this app's folder."))
+    hint:set(tr("No books. Add .epub or .txt files to this app's folder."))
     if not fs.read("README.txt", 0, 0) then fs.write("README.txt", README) end   -- creates the folder too
   else
     hint:set(string.format(tr("%d book(s)"), #names))
