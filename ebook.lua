@@ -900,17 +900,32 @@ end
 local function size_label() return tr("Text size") .. ": " .. size end
 local function images_label() return tr("Images") .. ": " .. tr(IMG_NAMES[img_mode]) end
 
+-- A label with width() wraps, so its height is its line count, not one line. Cut
+-- `s` (with "...") until it fits `max_lines` and return it with the lines it takes.
+local function fit_text(s, w, size, max_lines)
+  local n = ui.text_lines(s, w, size)
+  if n <= max_lines then return s, n end
+  local lo, hi = 0, #s
+  while lo < hi do
+    local mid = (lo + hi + 1) // 2
+    if ui.text_lines(s:sub(1, mid) .. "...", w, size) <= max_lines then lo = mid else hi = mid - 1 end
+  end
+  return s:sub(1, lo) .. "...", max_lines
+end
+
 function show_menu()
   remember()
   clear()
   screen = "menu"
   text_lbl, stat_lbl = nil, nil
-  local t = ui.label(book and book.title or "", M, M, 16, C.text, true)
-  t:width(W - 2 * M)
-  local y = M + ui.text_h(16) + 4
+  local tw = W - 2 * M
+  local title, tn = fit_text(book and book.title or "", tw, 16, 3)
+  ui.label(title, M, M, 16, C.text, true):width(tw)
+  local y = M + tn * ui.text_h(16) + 4
   if book and book.author ~= "" then
-    ui.label(book.author, M, y, 12, C.sub):width(W - 2 * M)
-    y = y + ui.text_h(12) + 2
+    local author, an = fit_text(book.author, tw, 12, 2)
+    ui.label(author, M, y, 12, C.sub):width(tw)
+    y = y + an * ui.text_h(12) + 2
   end
   local list = ui.list(M, y + 4, W - 2 * M, H - y - 2 * M - 4)
   local size_row, img_row
