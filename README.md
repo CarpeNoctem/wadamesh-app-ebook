@@ -46,7 +46,9 @@ The app runs unmodified in the Wadamesh Lua harness:
 
 Version 2.0 (current) adds: pictures shown on tap by default, a long title no longer
 overlapping the author in the menu, `.txt` files, a first-run README that names the
-books folder, and no separate "View image" menu row (tap the picture line, or press `i`).
+books folder, and no separate "View image" menu row on touch devices (tap the picture line, or press `i`;
+devices without a touchscreen list the page's pictures in the menu). On those devices the
+d-pad right/left keys turn to the next/previous page.
 Version 1.0 is kept under `deploy/apps/ebook/1.0/`.
 
 Books stay in the app's own folder (`ebook.d`): the Lua SDK can list the SD card
