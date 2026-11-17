@@ -21,6 +21,34 @@ boards that run Lua apps with the extended SDK (`requires: sdk_ext`).
    `/meshcomod/apps/ebook.d/` (SD card).
 3. Open **Ebook** from the apps list.
 
+## Controls
+
+**Reading a page**
+
+| Action | Touch | Keyboard | Trackball / D-pad / wheel |
+|---|---|---|---|
+| Next page | tap the right third, or swipe left | right, down, `n` | T-Deck trackball: left or down. M9 D-pad: right or down |
+| Previous page | tap the left third, or swipe right | left, up, `p`, Backspace | T-Deck trackball: right or up. M9 D-pad: left or up |
+| Menu | tap the middle, or the menu button | Enter or `m` | centre click / Enter |
+| Chapters | menu > Chapters | `c` | menu > Chapters |
+| View a picture (Images: on tap) | tap its `<image: ...>` line | `i` | menu > View image (touchless boards) |
+
+- Touch boards also have `<`, menu and `>` buttons under the text; a jog wheel or
+  encoder moves between them and clicks. Touchless boards (M9) show only the page
+  number and progress there.
+- On the M9, left/right are reversed from a touch swipe: right goes forward.
+- Taps in the button row and the end of a drag do not turn the page.
+- Space does nothing, so it stays free for the device's own use.
+
+**A picture** (full screen): any tap or key closes it.
+
+**Menus, the book list and the chapter list**: tap a row, or move with the trackball
+/ D-pad / wheel and press Enter or click. The first row goes back one step:
+"Continue reading" from the menu, "Back" from the book list or chapter list (to the
+menu). In the menu, "Text size" and "Images" cycle through their choices each time
+you pick them, and "Earlier chapters" / "Later chapters" page through long chapter
+lists. The device's own Home or Back control exits the app.
+
 ## Preparing books
 
 The Lua SDK has no inflate, so the `.epub` must be stored uncompressed, and
